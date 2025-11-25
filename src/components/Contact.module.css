@@ -1,0 +1,44 @@
+.contact {
+    padding: 100px 10%;
+    background: var(--background);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+}
+
+.heading {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: var(--foreground);
+}
+
+.text {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: #aaa;
+    max-width: 600px;
+    margin-bottom: 3rem;
+}
+
+.button {
+    display: inline-block;
+    padding: 1.25rem 3rem;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: transparent;
+}
+
+.button:hover {
+    background: var(--primary-glow);
+    box-shadow: 0 0 20px var(--primary-glow);
+    transform: translateY(-3px);
+}
