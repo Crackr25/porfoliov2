@@ -306,8 +306,8 @@ export default function FlappyBackground() {
 
             for (let i = 0; i < missiles.length; i++) {
                 const m = missiles[i];
-                // Giant missiles move slightly slower
-                m.x -= m.isGiant ? currentSpeed * 0.8 : currentSpeed;
+                // Giant missiles move much faster (3x)
+                m.x -= m.isGiant ? currentSpeed * 3.0 : currentSpeed;
 
                 if (missileImage.complete) {
                     ctx.drawImage(missileImage, m.x, m.y, m.w, m.h);
