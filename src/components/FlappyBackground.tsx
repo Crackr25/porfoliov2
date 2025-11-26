@@ -12,6 +12,9 @@ export default function FlappyBackground() {
     const [gameOver, setGameOver] = useState(false);
     const [showWarning, setShowWarning] = useState(false);
 
+    // Refs for values needed inside the game loop to avoid stale closures
+    const highScoreRef = useRef(0);
+
     // Narrative Steps Configuration
     const narrativeSteps = [
         { score: 1, text: "Hi, I'm Izakahr Echem" },
@@ -24,8 +27,17 @@ export default function FlappyBackground() {
     // Load High Score
     useEffect(() => {
         const saved = localStorage.getItem("missileHighScore");
-        if (saved) setHighScore(parseInt(saved));
+        if (saved) {
+            const parsed = parseInt(saved);
+            setHighScore(parsed);
+            highScoreRef.current = parsed;
+        }
     }, []);
+
+    // Update ref when high score changes
+    useEffect(() => {
+        highScoreRef.current = highScore;
+    }, [highScore]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -45,6 +57,10 @@ export default function FlappyBackground() {
         let frames = 0;
         let mouseX = 0;
         let mouseY = 0;
+
+        // Local game state to avoid closure staleness
+        let currentScore = 0;
+        let isGameOver = false;
 
         // Game constants
         const gravity = 0.25;
@@ -157,8 +173,7 @@ export default function FlappyBackground() {
                     // Floor collision
                     if (drone.y + drone.h >= canvas.height) {
                         drone.y = canvas.height - drone.h;
-                        setGameOver(true);
-                        checkHighScore();
+                        handleGameOver();
                     }
 
                     // Ceiling collision
@@ -194,10 +209,17 @@ export default function FlappyBackground() {
             }
         };
 
+        const handleGameOver = () => {
+            isGameOver = true;
+            setGameOver(true);
+            checkHighScore();
+        };
+
         const checkHighScore = () => {
-            if (score > highScore) {
-                setHighScore(score);
-                localStorage.setItem("missileHighScore", score.toString());
+            if (currentScore > highScoreRef.current) {
+                highScoreRef.current = currentScore;
+                setHighScore(currentScore);
+                localStorage.setItem("missileHighScore", currentScore.toString());
             }
         };
 
@@ -212,7 +234,11 @@ export default function FlappyBackground() {
             warningTimer = 0;
             giantMissilePending = false;
             setShowWarning(false);
+
+            currentScore = 0;
             setScore(0);
+
+            isGameOver = false;
             setGameOver(false);
         };
 
@@ -249,13 +275,12 @@ export default function FlappyBackground() {
         const handleGiantMissileLogic = () => {
             if (!isGameActive) return;
 
-            // Trigger warning every 15 points or randomly (here we do random for demo feel)
-            // Let's make it more predictable for testing: every 10 points
-            if (score > 0 && score % 10 === 0 && !warningActive && !giantMissilePending && !spawnedNarratives.has(score + 1000)) { // +1000 hack to prevent multi-trigger
+            // Trigger warning every 10 points
+            if (currentScore > 0 && currentScore % 10 === 0 && !warningActive && !giantMissilePending && !spawnedNarratives.has(currentScore + 1000)) {
                 warningActive = true;
                 warningTimer = warningDuration;
                 setShowWarning(true);
-                spawnedNarratives.add(score + 1000); // Mark this milestone as triggered
+                spawnedNarratives.add(currentScore + 1000);
             }
 
             if (warningActive) {
@@ -291,7 +316,7 @@ export default function FlappyBackground() {
                     ctx.fillRect(m.x, m.y, m.w, m.h);
                 }
 
-                if (isGameActive) {
+                if (isGameActive && !isGameOver) {
                     const hitX = drone.x + 15;
                     const hitY = drone.y + 15;
                     const hitW = drone.w - 30;
@@ -308,12 +333,12 @@ export default function FlappyBackground() {
                         hitY < mHitY + mHitH &&
                         hitY + hitH > mHitY
                     ) {
-                        setGameOver(true);
-                        checkHighScore();
+                        handleGameOver();
                     }
 
                     if (m.x + m.w < drone.x && !m.passed) {
-                        setScore((prev) => prev + 1); // Giant missile gives 1 point too for now
+                        currentScore++;
+                        setScore(currentScore);
                         m.passed = true;
                     }
                 }
@@ -328,10 +353,10 @@ export default function FlappyBackground() {
         const drawFloatingText = () => {
             // Check if we need to spawn narrative
             if (isGameActive) {
-                const step = narrativeSteps.find(s => s.score === score);
-                if (step && !spawnedNarratives.has(score)) {
+                const step = narrativeSteps.find(s => s.score === currentScore);
+                if (step && !spawnedNarratives.has(currentScore)) {
                     spawnFloatingText(step.text);
-                    spawnedNarratives.add(score);
+                    spawnedNarratives.add(currentScore);
                 }
             }
 
@@ -378,7 +403,7 @@ export default function FlappyBackground() {
             if (!isGameActive) return;
 
             if ((e as KeyboardEvent).code === "Space" || e.type === "click" || e.type === "touchstart") {
-                if (gameOver) {
+                if (isGameOver) {
                     resetGame();
                 } else {
                     drone.jump();
@@ -414,7 +439,7 @@ export default function FlappyBackground() {
             window.removeEventListener("mousemove", handleMouseMove);
             cancelAnimationFrame(animationFrameId);
         };
-    }, [isGameActive, gameOver, highScore]);
+    }, [isGameActive]); // Removed other dependencies to prevent loop reset
 
     return (
         <>
