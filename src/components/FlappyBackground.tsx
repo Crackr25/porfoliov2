@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useGame } from "@/context/GameContext";
-import { X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { X, TriangleAlert } from "lucide-react";
 
 export default function FlappyBackground() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -11,19 +10,20 @@ export default function FlappyBackground() {
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
+    const [showWarning, setShowWarning] = useState(false);
 
     // Narrative Steps Configuration
     const narrativeSteps = [
-        { score: 0, text: "Hi, I'm Izakahr Echem" },
-        { score: 2, text: "Full Stack Laravel Developer" },
-        { score: 5, text: "Specializing in PHP & React" },
-        { score: 8, text: "Building Secure Systems" },
+        { score: 1, text: "Hi, I'm Izakahr Echem" },
+        { score: 3, text: "Full Stack Laravel Developer" },
+        { score: 6, text: "Specializing in PHP & React" },
+        { score: 9, text: "Building Secure Systems" },
         { score: 12, text: "Let's Build Something Great!" },
     ];
 
     // Load High Score
     useEffect(() => {
-        const saved = localStorage.getItem("flappyHighScore");
+        const saved = localStorage.getItem("missileHighScore");
         if (saved) setHighScore(parseInt(saved));
     }, []);
 
@@ -34,36 +34,120 @@ export default function FlappyBackground() {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
+        // Load Images
+        const robotImage = new Image();
+        robotImage.src = "/robot.png";
+
+        const missileImage = new Image();
+        missileImage.src = "/missile.png";
+
         let animationFrameId: number;
         let frames = 0;
+        let mouseX = 0;
+        let mouseY = 0;
 
         // Game constants
         const gravity = 0.25;
         const jumpStrength = -4.5;
-        const activeSpeed = 3;
+        const activeSpeed = 5;
         const idleSpeed = 1;
-        const pipeGap = 170;
-        const pipeWidth = 60;
-        const pipeSpacing = 250;
+        const missileSpawnRate = 100;
+
+        // Giant Missile State
+        let warningActive = false;
+        let warningTimer = 0;
+        let giantMissilePending = false;
+        const warningDuration = 120; // 2 seconds at 60fps
+
+        // Starfield
+        const stars: { x: number; y: number; size: number; opacity: number; speed: number }[] = [];
+        const numStars = 100;
+
+        const initStars = () => {
+            for (let i = 0; i < numStars; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 0.5,
+                    opacity: Math.random(),
+                    speed: Math.random() * 0.5 + 0.1
+                });
+            }
+        };
+
+        const drawStars = () => {
+            ctx.fillStyle = "white";
+            stars.forEach(star => {
+                ctx.globalAlpha = star.opacity;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Twinkle effect
+                if (Math.random() > 0.95) {
+                    star.opacity = Math.random();
+                }
+
+                // Move stars slightly for parallax feel
+                star.x -= star.speed * (isGameActive ? 2 : 0.5);
+                if (star.x < 0) {
+                    star.x = canvas.width;
+                    star.y = Math.random() * canvas.height;
+                }
+            });
+            ctx.globalAlpha = 1.0;
+        };
 
         // Drone (Player)
         const drone = {
             x: 100,
             y: canvas.height / 2,
-            w: 30,
-            h: 30,
+            w: 80,
+            h: 80,
             velocity: 0,
             draw: () => {
                 if (!ctx) return;
-                ctx.fillStyle = "#06b6d4"; // Cyan
-                ctx.shadowBlur = isGameActive ? 15 : 5;
-                ctx.shadowColor = "#06b6d4";
-                ctx.fillRect(drone.x, drone.y, drone.w, drone.h);
-                ctx.shadowBlur = 0;
 
-                // Drone eye
-                ctx.fillStyle = "#ffffff";
-                ctx.fillRect(drone.x + 20, drone.y + 5, 5, 5);
+                ctx.save();
+
+                if (robotImage.complete) {
+                    ctx.drawImage(robotImage, drone.x, drone.y, drone.w, drone.h);
+                } else {
+                    ctx.fillStyle = "#06b6d4";
+                    ctx.fillRect(drone.x, drone.y, drone.w, drone.h);
+                }
+
+                // Draw Eyes (Procedural)
+                const eyeOffsetX = 50;
+                const eyeOffsetY = 25;
+                const eyeX = drone.x + eyeOffsetX;
+                const eyeY = drone.y + eyeOffsetY;
+                const eyeRadius = 6;
+                const pupilRadius = 2.5;
+
+                // Calculate angle to mouse
+                const dx = mouseX - eyeX;
+                const dy = mouseY - eyeY;
+                const angle = Math.atan2(dy, dx);
+
+                // Limit pupil movement
+                const maxPupilDist = 2;
+                const pupilX = eyeX + Math.cos(angle) * maxPupilDist;
+                const pupilY = eyeY + Math.sin(angle) * maxPupilDist;
+
+                // Draw Sclera (White part)
+                ctx.fillStyle = "white";
+                ctx.beginPath();
+                ctx.arc(eyeX, eyeY, eyeRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw Pupil (Cyan part)
+                ctx.fillStyle = "#06b6d4";
+                ctx.beginPath();
+                ctx.arc(pupilX, pupilY, pupilRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
             },
             update: () => {
                 if (isGameActive) {
@@ -95,9 +179,12 @@ export default function FlappyBackground() {
             },
         };
 
-        // Obstacles
-        const pipes: { x: number; topHeight: number; passed: boolean; text?: string }[] = [];
-        let pipesSpawned = 0;
+        // Missiles
+        const missiles: { x: number; y: number; w: number; h: number; passed: boolean; isGiant: boolean }[] = [];
+
+        // Floating Narrative Text
+        const floatingTexts: { x: number; y: number; text: string; alpha: number }[] = [];
+        const spawnedNarratives = new Set<number>();
 
         const resizeCanvas = () => {
             canvas.width = window.innerWidth;
@@ -110,166 +197,176 @@ export default function FlappyBackground() {
         const checkHighScore = () => {
             if (score > highScore) {
                 setHighScore(score);
-                localStorage.setItem("flappyHighScore", score.toString());
+                localStorage.setItem("missileHighScore", score.toString());
             }
         };
 
         const resetGame = () => {
             drone.y = canvas.height / 2;
             drone.velocity = 0;
-            pipes.length = 0;
+            missiles.length = 0;
+            floatingTexts.length = 0;
+            spawnedNarratives.clear();
             frames = 0;
-            pipesSpawned = 0;
+            warningActive = false;
+            warningTimer = 0;
+            giantMissilePending = false;
+            setShowWarning(false);
             setScore(0);
             setGameOver(false);
-
-            // Spawn first pipe
-            spawnPipe(true);
         };
 
-        const spawnPipe = (isFirst = false) => {
-            const minHeight = 50;
-            const maxHeight = canvas.height - pipeGap - minHeight;
-            const topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight);
+        const spawnMissile = (isGiant = false) => {
+            let w = 60;
+            let h = 30;
+            let y = Math.random() * (canvas.height - h);
 
-            // Calculate start X
-            let startX = canvas.width;
-            if (isFirst) {
-                startX = Math.max(canvas.width * 0.6, 400);
+            if (isGiant) {
+                w = 180;
+                h = 90;
+                y = Math.random() * (canvas.height - h);
             }
 
-            // Get narrative text for this pipe index
-            const narrative = narrativeSteps.find(s => s.score === pipesSpawned);
-
-            pipes.push({
-                x: startX,
-                topHeight,
+            missiles.push({
+                x: canvas.width,
+                y,
+                w,
+                h,
                 passed: false,
-                text: narrative?.text
+                isGiant
             });
-
-            pipesSpawned++;
         };
 
-        const drawPipes = () => {
-            const currentSpeed = isGameActive ? activeSpeed : idleSpeed;
-            const currentSpacing = isGameActive ? pipeSpacing : pipeSpacing * 1.5;
+        const spawnFloatingText = (text: string) => {
+            floatingTexts.push({
+                x: canvas.width,
+                y: canvas.height / 3, // Spawn in upper third
+                text,
+                alpha: 1.0
+            });
+        };
 
-            // Only spawn new pipes if we've moved enough frames
-            if (frames > 0 && frames % currentSpacing === 0) {
-                spawnPipe();
+        const handleGiantMissileLogic = () => {
+            if (!isGameActive) return;
+
+            // Trigger warning every 15 points or randomly (here we do random for demo feel)
+            // Let's make it more predictable for testing: every 10 points
+            if (score > 0 && score % 10 === 0 && !warningActive && !giantMissilePending && !spawnedNarratives.has(score + 1000)) { // +1000 hack to prevent multi-trigger
+                warningActive = true;
+                warningTimer = warningDuration;
+                setShowWarning(true);
+                spawnedNarratives.add(score + 1000); // Mark this milestone as triggered
             }
 
-            for (let i = 0; i < pipes.length; i++) {
-                const p = pipes[i];
-                p.x -= currentSpeed;
+            if (warningActive) {
+                warningTimer--;
+                if (warningTimer <= 0) {
+                    warningActive = false;
+                    setShowWarning(false);
+                    giantMissilePending = true;
+                }
+            } else if (giantMissilePending) {
+                spawnMissile(true);
+                giantMissilePending = false;
+            }
+        };
 
-                // Draw Top Pipe
-                ctx.fillStyle = isGameActive ? "#8b5cf6" : "rgba(139, 92, 246, 0.2)"; // Violet
-                ctx.shadowBlur = isGameActive ? 5 : 0;
-                ctx.shadowColor = "#8b5cf6";
-                ctx.fillRect(p.x, 0, pipeWidth, p.topHeight);
+        const drawMissiles = () => {
+            const currentSpeed = isGameActive ? activeSpeed : idleSpeed;
 
-                // Draw Bottom Pipe
-                ctx.fillRect(p.x, p.topHeight + pipeGap, pipeWidth, canvas.height - p.topHeight - pipeGap);
-                ctx.shadowBlur = 0;
+            // Normal Spawn logic (disable if warning is active to clear screen for boss)
+            if (isGameActive && !warningActive && !giantMissilePending && frames % missileSpawnRate === 0) {
+                spawnMissile(false);
+            }
 
-                // Draw Narrative Text in Gap
-                if (p.text && isGameActive) {
-                    ctx.save();
-                    ctx.fillStyle = "white";
-                    ctx.font = "bold 24px Inter, sans-serif";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-                    ctx.shadowBlur = 4;
-                    ctx.shadowOffsetX = 2;
-                    ctx.shadowOffsetY = 2;
+            for (let i = 0; i < missiles.length; i++) {
+                const m = missiles[i];
+                // Giant missiles move slightly slower
+                m.x -= m.isGiant ? currentSpeed * 0.8 : currentSpeed;
 
-                    // Split text into multiple lines if too long
-                    const words = p.text.split(' ');
-                    let line = '';
-                    const lines = [];
-                    const maxWidth = 300; // Max width for text
-
-                    for (let n = 0; n < words.length; n++) {
-                        const testLine = line + words[n] + ' ';
-                        const metrics = ctx.measureText(testLine);
-                        const testWidth = metrics.width;
-                        if (testWidth > maxWidth && n > 0) {
-                            lines.push(line);
-                            line = words[n] + ' ';
-                        } else {
-                            line = testLine;
-                        }
-                    }
-                    lines.push(line);
-
-                    // Draw lines centered in gap
-                    const lineHeight = 30;
-                    const totalHeight = lines.length * lineHeight;
-                    const startY = p.topHeight + (pipeGap / 2) - (totalHeight / 2) + (lineHeight / 2);
-
-                    lines.forEach((l, index) => {
-                        ctx.fillText(l, p.x + pipeWidth / 2, startY + (index * lineHeight));
-                    });
-
-                    ctx.restore();
+                if (missileImage.complete) {
+                    ctx.drawImage(missileImage, m.x, m.y, m.w, m.h);
+                } else {
+                    ctx.fillStyle = "#ef4444";
+                    ctx.fillRect(m.x, m.y, m.w, m.h);
                 }
 
-                // Collision Detection (Only when active)
                 if (isGameActive) {
+                    const hitX = drone.x + 15;
+                    const hitY = drone.y + 15;
+                    const hitW = drone.w - 30;
+                    const hitH = drone.h - 30;
+
+                    const mHitX = m.x + 5;
+                    const mHitY = m.y + 5;
+                    const mHitW = m.w - 10;
+                    const mHitH = m.h - 10;
+
                     if (
-                        drone.x < p.x + pipeWidth &&
-                        drone.x + drone.w > p.x &&
-                        (drone.y < p.topHeight || drone.y + drone.h > p.topHeight + pipeGap)
+                        hitX < mHitX + mHitW &&
+                        hitX + hitW > mHitX &&
+                        hitY < mHitY + mHitH &&
+                        hitY + hitH > mHitY
                     ) {
                         setGameOver(true);
                         checkHighScore();
                     }
 
-                    // Score Update
-                    if (p.x + pipeWidth < drone.x && !p.passed) {
-                        setScore((prev) => prev + 1);
-                        p.passed = true;
+                    if (m.x + m.w < drone.x && !m.passed) {
+                        setScore((prev) => prev + 1); // Giant missile gives 1 point too for now
+                        m.passed = true;
                     }
                 }
 
-                // Remove off-screen pipes
-                if (p.x + pipeWidth < -300) { // Increased buffer for text visibility
-                    pipes.shift();
+                if (m.x + m.w < -200) {
+                    missiles.shift();
                     i--;
                 }
             }
         };
 
-        const drawGrid = () => {
-            if (isGameActive) return; // Hide grid in game mode for cleaner look
-
-            ctx.strokeStyle = "rgba(139, 92, 246, 0.05)";
-            ctx.lineWidth = 1;
-            const gridSize = 50;
-
-            for (let x = 0; x <= canvas.width; x += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
+        const drawFloatingText = () => {
+            // Check if we need to spawn narrative
+            if (isGameActive) {
+                const step = narrativeSteps.find(s => s.score === score);
+                if (step && !spawnedNarratives.has(score)) {
+                    spawnFloatingText(step.text);
+                    spawnedNarratives.add(score);
+                }
             }
 
-            for (let y = 0; y <= canvas.height; y += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
+            for (let i = 0; i < floatingTexts.length; i++) {
+                const ft = floatingTexts[i];
+                ft.x -= 2; // Move slower than missiles
+
+                ctx.save();
+                ctx.globalAlpha = ft.alpha;
+                ctx.fillStyle = "white";
+                ctx.font = "bold 32px Inter, sans-serif";
+                ctx.textAlign = "center";
+                ctx.shadowColor = "#06b6d4";
+                ctx.shadowBlur = 10;
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+
+                if (ft.x < -500) {
+                    floatingTexts.shift();
+                    i--;
+                }
             }
         };
 
         const animate = () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Clear with dark space background
+            ctx.fillStyle = "#050510"; // Dark space blue/black
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            drawGrid();
-            drawPipes();
+            drawStars();
+
+            handleGiantMissileLogic();
+
+            drawFloatingText();
+            drawMissiles();
             drone.update();
             drone.draw();
 
@@ -289,14 +386,20 @@ export default function FlappyBackground() {
             }
         };
 
+        const handleMouseMove = (e: MouseEvent) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        };
+
         window.addEventListener("resize", resizeCanvas);
         window.addEventListener("keydown", handleInput);
         window.addEventListener("click", handleInput);
         window.addEventListener("touchstart", handleInput);
+        window.addEventListener("mousemove", handleMouseMove);
 
         resizeCanvas();
+        initStars();
 
-        // Force reset if starting game
         if (isGameActive) {
             resetGame();
         }
@@ -308,6 +411,7 @@ export default function FlappyBackground() {
             window.removeEventListener("keydown", handleInput);
             window.removeEventListener("click", handleInput);
             window.removeEventListener("touchstart", handleInput);
+            window.removeEventListener("mousemove", handleMouseMove);
             cancelAnimationFrame(animationFrameId);
         };
     }, [isGameActive, gameOver, highScore]);
@@ -316,11 +420,21 @@ export default function FlappyBackground() {
         <>
             <canvas
                 ref={canvasRef}
-                className={`fixed top-0 left-0 w-full h-full -z-10 bg-[#050505] transition-opacity duration-1000 ${isGameActive ? 'cursor-pointer' : ''}`}
+                className={`fixed top-0 left-0 w-full h-full -z-10 bg-[#050510] transition-opacity duration-1000 ${isGameActive ? 'cursor-pointer' : ''}`}
             />
 
             {isGameActive && (
                 <div className="fixed inset-0 z-[100] pointer-events-none">
+                    {/* Warning Indicator */}
+                    {showWarning && (
+                        <div className="absolute top-1/2 right-10 -translate-y-1/2 flex flex-col items-center animate-pulse">
+                            <TriangleAlert className="w-24 h-24 text-red-500 mb-2 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)]" />
+                            <div className="text-4xl font-bold text-red-500 font-mono tracking-widest drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]">
+                                WARNING
+                            </div>
+                        </div>
+                    )}
+
                     {/* Score Display */}
                     <div className="absolute top-8 left-1/2 -translate-x-1/2 text-center">
                         <div className="text-6xl font-bold text-white font-mono drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]">
