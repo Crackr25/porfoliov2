@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Github } from "lucide-react";
+import { ArrowRight, Github, Linkedin } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 import { useRef } from "react";
 import Image from "next/image";
@@ -80,6 +80,18 @@ export default function Hero() {
                         <Github className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors relative z-10" />
                         <span className="relative z-10 font-bold tracking-widest text-gray-400 group-hover:text-white transition-colors">
                             GITHUB
+                        </span>
+                    </a>
+
+                    <a
+                        href="https://www.linkedin.com/in/echem-izakahr-07456927a/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative inline-flex items-center gap-3 px-8 py-4 bg-[#0A66C2]/10 border border-[#0A66C2]/50 hover:border-[#0A66C2] hover:bg-[#0A66C2]/20 transition-all duration-300 rounded-sm overflow-hidden"
+                    >
+                        <Linkedin className="w-5 h-5 text-[#0A66C2] group-hover:text-white transition-colors relative z-10" />
+                        <span className="relative z-10 font-bold tracking-widest text-[#0A66C2] group-hover:text-white transition-colors">
+                            LINKEDIN
                         </span>
                     </a>
                 </motion.div>
