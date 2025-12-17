@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import CustomCursor from "@/components/CustomCursor";
 import FlappyBackground from "@/components/FlappyBackground";
 import UIWrapper from "@/components/UIWrapper";
@@ -35,6 +36,7 @@ export default function RootLayout({
           <UIWrapper>
             {children}
           </UIWrapper>
+          <Analytics />
         </GameProvider>
       </body>
     </html>
