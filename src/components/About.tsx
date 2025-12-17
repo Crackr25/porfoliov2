@@ -12,21 +12,33 @@ const stats = [
 const experience = [
     {
         year: "2024 - Present",
-        role: "Full Stack Laravel Developer",
+        role: "Full Stack Developer",
         company: "Freelance (Remote)",
-        desc: "Developing scalable Laravel systems for international clients. Managing Linux server deployments."
+        highlights: [
+            "Developing scalable systems for multiple international clients.",
+            "Building diverse solutions across various tech stacks & random projects.",
+            "Managing Linux server deployments and infrastructure."
+        ]
     },
     {
         year: "2023 - Present",
-        role: "Team Lead / Full-Stack Dev",
+        role: "Lead Developer / DevOps",
         company: "CK Children's Publishing",
-        desc: "Leading development of educational management systems. Mentoring junior devs and overseeing architecture."
+        highlights: [
+            "Managed Organization Repo, Code Reviews, and Standards.",
+            "Implemented CI/CD pipelines & handled DevOps tasks.",
+            "Deployed and maintained 100+ school-related projects.",
+            "Led development of educational management systems."
+        ]
     },
     {
         year: "2022 - 2023",
         role: "Admin Assistant / Tech Support",
         company: "LGU Baungon",
-        desc: "Provided technical support and automated payroll/report systems."
+        highlights: [
+            "Provided technical support for local government systems.",
+            "Automated payroll and report generation processes."
+        ]
     },
 ];
 
@@ -83,8 +95,12 @@ export default function About() {
                         >
                             <span className="text-accent font-mono text-sm">{item.year}</span>
                             <h4 className="text-xl font-bold text-white mt-1">{item.role}</h4>
-                            <p className="text-gray-400 text-sm mb-2">{item.company}</p>
-                            <p className="text-gray-500 text-sm">{item.desc}</p>
+                            <p className="text-gray-400 text-sm mb-3">{item.company}</p>
+                            <ul className="text-gray-500 text-sm list-disc list-inside space-y-1">
+                                {item.highlights.map((highlight, i) => (
+                                    <li key={i}>{highlight}</li>
+                                ))}
+                            </ul>
                         </motion.div>
                     ))}
                 </div>

@@ -1,9 +1,10 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Github } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 import { useRef } from "react";
+import Image from "next/image";
 
 export default function Hero() {
     const { startGame } = useGame();
@@ -22,7 +23,7 @@ export default function Hero() {
 
             <motion.div
                 style={{ y: yText, opacity: opacityText }}
-                className="z-10 text-center space-y-6"
+                className="z-10 text-center space-y-6 max-w-4xl mx-auto px-4"
             >
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -37,7 +38,7 @@ export default function Hero() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="text-6xl md:text-8xl font-bold tracking-tighter mb-2 glitch-text"
+                    className="text-6xl md:text-8xl font-bold tracking-tighter mb-2 glitch-text leading-tight"
                     data-text="IZAKAHR ECHEM"
                 >
                     IZAKAHR ECHEM
@@ -56,7 +57,7 @@ export default function Hero() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6 }}
-                    className="pt-8"
+                    className="pt-8 flex flex-wrap justify-center gap-4"
                 >
                     <button
                         onClick={startGame}
@@ -69,6 +70,34 @@ export default function Hero() {
 
                         <div className="absolute inset-0 bg-primary translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
                     </button>
+
+                    <a
+                        href="https://github.com/Crackr25"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative inline-flex items-center gap-3 px-8 py-4 bg-white/5 border border-white/10 hover:border-white/30 hover:bg-white/10 transition-all duration-300 rounded-sm overflow-hidden"
+                    >
+                        <Github className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors relative z-10" />
+                        <span className="relative z-10 font-bold tracking-widest text-gray-400 group-hover:text-white transition-colors">
+                            GITHUB
+                        </span>
+                    </a>
+                </motion.div>
+
+                {/* Github Contribution Graph */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 }}
+                    className="pt-12 hidden md:block" // Hidden on small screens to save space
+                >
+                    <div className="bg-black/30 p-2 border border-white/5 rounded-sm backdrop-blur-sm inline-block">
+                        <img
+                            src="https://ghchart.rshah.org/8b5cf6/Crackr25"
+                            alt="Github Contribution Graph"
+                            className="w-full h-auto opacity-70 hover:opacity-100 transition-opacity"
+                        />
+                    </div>
                 </motion.div>
             </motion.div>
 
