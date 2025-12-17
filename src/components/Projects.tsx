@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ExternalLink, Github, Gamepad2 } from "lucide-react";
+import { ExternalLink, Github, Gamepad2, Code, Database, Cpu, Globe } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 import Image from "next/image";
 
@@ -112,9 +112,9 @@ const projects = [
         tech: ["Web Audio API", "Visuals", "CSS"],
         status: "COMPLETE",
         difficulty: "NORMAL",
-        demo: null,
+        demo: "https://neon-dj.vercel.app/",
         github: "https://github.com/Crackr25/neon_dj.git",
-        image: null
+        image: "https://s0.wp.com/mshots/v1/https://neon-dj.vercel.app/?w=800"
     }
 ];
 
@@ -135,11 +135,42 @@ export default function Projects() {
                     </h2>
                     <div className="h-1 w-20 bg-accent mx-auto mb-6" />
 
+                </motion.div>
+
+                {/* Stats Dashboard */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 }}
+                    className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16 max-w-4xl mx-auto"
+                >
+                    {[
+                        { label: "TOTAL ARCHIVES", value: projects.length, icon: Database, color: "text-accent" },
+                        { label: "DEPLOYED", value: projects.filter(p => p.demo).length, icon: Globe, color: "text-blue-400" },
+                        { label: "TECH STACK", value: "15+", icon: Code, color: "text-purple-400" },
+                        { label: "SYS STATUS", value: "ONLINE", icon: Cpu, color: "text-green-400" },
+                    ].map((stat, i) => (
+                        <div key={i} className="bg-card-bg/50 border border-white/5 p-4 rounded-sm flex flex-col items-center justify-center text-center group hover:border-white/20 transition-colors">
+                            <stat.icon className={`w-6 h-6 mb-2 ${stat.color} opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all`} />
+                            <div className="text-2xl font-bold text-white mb-1 font-mono">{stat.value}</div>
+                            <div className="text-[10px] text-gray-400 tracking-widest font-mono">{stat.label}</div>
+                        </div>
+                    ))}
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.4 }}
+                    className="text-center mb-16"
+                >
                     <button
                         onClick={startGame}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/50 rounded-sm text-accent hover:bg-accent/20 hover:border-accent transition-all text-sm font-mono tracking-wider"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-accent/10 border border-accent/50 rounded-sm text-accent hover:bg-accent/20 hover:border-accent transition-all text-sm font-mono tracking-wider group"
                     >
-                        <Gamepad2 className="w-4 h-4" />
+                        <Gamepad2 className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                         INITIATE TRAINING SIM
                     </button>
                 </motion.div>
@@ -152,7 +183,8 @@ export default function Projects() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.1 }}
-                            className="group relative bg-card-bg border border-card-border overflow-hidden hover:border-primary transition-colors duration-300 flex flex-col"
+                            className={`group relative bg-card-bg border border-card-border overflow-hidden hover:border-primary transition-colors duration-300 flex flex-col ${project.demo ? 'cursor-pointer' : ''}`}
+                            onClick={() => project.demo && window.open(project.demo, '_blank')}
                         >
                             {/* Project Image / Placeholder */}
                             <div className="h-48 w-full relative bg-black/50 overflow-hidden group-hover:opacity-80 transition-opacity">
@@ -201,12 +233,24 @@ export default function Projects() {
 
                                 <div className="flex gap-4 pt-4 border-t border-white/5">
                                     {project.github && (
-                                        <a href={project.github} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                                        <a
+                                            href={project.github}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-gray-400 hover:text-white transition-colors"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
                                             <Github size={20} />
                                         </a>
                                     )}
                                     {project.demo && (
-                                        <a href={project.demo} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                                        <a
+                                            href={project.demo}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-gray-400 hover:text-white transition-colors"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
                                             <ExternalLink size={20} />
                                         </a>
                                     )}
