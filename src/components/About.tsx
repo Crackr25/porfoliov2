@@ -2,11 +2,10 @@
 
 import { motion } from "framer-motion";
 
-const stats = [
-    { label: "PHP / Laravel", value: "100%" },
-    { label: "JavaScript / React", value: "90%" },
-    { label: "Linux / DevOps", value: "85%" },
-    { label: "SQL / Database", value: "95%" },
+const arsenal = [
+    { category: "LANGUAGES", items: ["PHP", "JavaScript", "TypeScript", "Python", "C#", "SQL", "HTML", "CSS"] },
+    { category: "FRAMEWORKS", items: ["Laravel", "React", "Next.js", "Node.js", "Django", ".NET", "Tailwind CSS"] },
+    { category: "TOOLS", items: ["Linux", "Git", "Docker", "VS Code", "Postman", "CI/CD"] },
 ];
 
 const experience = [
@@ -60,20 +59,16 @@ export default function About() {
                         With a background in IT (Cum Laude) and certifications in Cisco Networking, I combine robust backend logic with dynamic frontend experiences.
                     </p>
 
-                    <div className="space-y-4">
-                        {stats.map((stat, index) => (
+                    <div className="space-y-6">
+                        {arsenal.map((group, index) => (
                             <div key={index}>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="font-mono text-gray-300">{stat.label}</span>
-                                    <span className="text-primary">{stat.value}</span>
-                                </div>
-                                <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                                    <motion.div
-                                        initial={{ width: 0 }}
-                                        whileInView={{ width: stat.value }}
-                                        transition={{ duration: 1, delay: 0.5 + index * 0.1 }}
-                                        className="h-full bg-primary"
-                                    />
+                                <h4 className="text-accent font-mono text-xs tracking-widest mb-3 border-b border-accent/20 pb-1 inline-block">{group.category}</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {group.items.map((item, i) => (
+                                        <span key={i} className="px-3 py-1 bg-white/5 border border-white/10 text-xs text-gray-300 font-mono rounded-sm hover:border-primary/50 hover:text-white hover:bg-primary/10 transition-colors cursor-default">
+                                            {item}
+                                        </span>
+                                    ))}
                                 </div>
                             </div>
                         ))}
