@@ -4,6 +4,7 @@ import { useGame } from "@/context/GameContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ScrollProgress from "@/components/ScrollProgress";
+import Surprise from "@/components/Surprise";
 
 export default function UIWrapper({ children }: { children: React.ReactNode }) {
     const { isGameActive } = useGame();
@@ -13,6 +14,7 @@ export default function UIWrapper({ children }: { children: React.ReactNode }) {
             <ScrollProgress />
             <Navbar />
             {children}
+            <Surprise />
             <Footer />
         </div>
     );

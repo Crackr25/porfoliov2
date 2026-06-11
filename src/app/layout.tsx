@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import CustomCursor from "@/components/CustomCursor";
-import FlappyBackground from "@/components/FlappyBackground";
+import GameMount from "@/components/GameMount";
+import SceneMount from "@/components/three/SceneMount";
 import UIWrapper from "@/components/UIWrapper";
 import { GameProvider } from "@/context/GameContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -30,14 +32,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${spaceGrotesk.variable} ${inter.variable} antialiased cursor-none`}>
+        <ThemeProvider>
         <GameProvider>
           <CustomCursor />
-          <FlappyBackground />
+          <SceneMount />
+          <GameMount />
           <UIWrapper>
             {children}
           </UIWrapper>
           <Analytics />
         </GameProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

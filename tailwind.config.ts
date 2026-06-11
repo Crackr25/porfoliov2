@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
     content: [
@@ -27,6 +28,11 @@ const config: Config = {
             },
         },
     },
-    plugins: [],
+    plugins: [
+        plugin(({ addVariant }) => {
+            // `cute:` utilities apply only when the cat theme is active
+            addVariant("cute", "body.cute &");
+        }),
+    ],
 };
 export default config;

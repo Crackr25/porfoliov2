@@ -18,7 +18,7 @@ export default function Footer() {
                 </a>
             </div>
             <p className={styles.copy}>
-                Designed & Built by [Your Name]
+                Designed & Built by Izakahr Echem
             </p>
         </footer>
     );

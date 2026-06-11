@@ -18,9 +18,9 @@ export default function FlappyBackground() {
     // Narrative Steps Configuration
     const narrativeSteps = [
         { score: 1, text: "Hi, I'm Izakahr Echem" },
-        { score: 3, text: "Full Stack Laravel Developer" },
-        { score: 6, text: "Specializing in PHP & React" },
-        { score: 9, text: "Building Secure Systems" },
+        { score: 3, text: "Full Stack Developer" },
+        { score: 6, text: "TypeScript, React & Laravel" },
+        { score: 9, text: "100+ Projects Shipped to Production" },
         { score: 12, text: "Let's Build Something Great!" },
     ];
 
@@ -445,7 +445,7 @@ export default function FlappyBackground() {
         <>
             <canvas
                 ref={canvasRef}
-                className={`fixed top-0 left-0 w-full h-full -z-10 bg-[#050510] transition-opacity duration-1000 ${isGameActive ? 'cursor-pointer' : ''}`}
+                className={`fixed top-0 left-0 w-full h-full transition-opacity duration-1000 ${isGameActive ? 'z-[90] opacity-100 cursor-pointer bg-[#050510]' : '-z-10 opacity-0 pointer-events-none'}`}
             />
 
             {isGameActive && (
